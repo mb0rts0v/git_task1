@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
         },
         {
-            name: 'Bulbasaur',
+            name: 'Squirtle',
             health: 100,
             maxHealth: 100,
             progressBar: document.getElementById('progressbar-enemy2'),
@@ -116,30 +116,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const handleKick = () => {
-        enemies.forEach(enemy => {
-            const damage = Math.floor(Math.random() * 20) + 1;
-            enemy.receiveDamage(damage, character.name);
-        });
+    const handleKick = (kickClickCounter) => {
+        if (kickClickCounter()) {
+            enemies.forEach(enemy => {
+                const damage = Math.floor(Math.random() * 20) + 1;
+                enemy.receiveDamage(damage, character.name);
+            });
 
-        const characterDamage = Math.floor(Math.random() * 20) + 1;
-        character.receiveDamage(characterDamage, enemies[Math.floor(Math.random() * enemies.length)].name);
+            const characterDamage = Math.floor(Math.random() * 20) + 1;
+            character.receiveDamage(characterDamage, enemies[Math.floor(Math.random() * enemies.length)].name);
 
-        checkGameOver();
+            checkGameOver();
+        }
     };
 
-    const handleKickStrong = () => {
-        enemies.forEach(enemy => {
-            const damage = Math.floor(Math.random() * 30) + 1;
-            enemy.receiveDamage(damage, character.name);
-        });
+    const handleKickStrong = (strongKickClickCounter) => {
+        if (strongKickClickCounter()) {
+            enemies.forEach(enemy => {
+                const damage = Math.floor(Math.random() * 30) + 1;
+                enemy.receiveDamage(damage, character.name);
+            });
 
-        const characterDamage = Math.floor(Math.random() * 30) + 1;
-        character.receiveDamage(characterDamage, enemies[Math.floor(Math.random() * enemies.length)].name);
+            const characterDamage = Math.floor(Math.random() * 30) + 1;
+            character.receiveDamage(characterDamage, enemies[Math.floor(Math.random() * enemies.length)].name);
 
-        checkGameOver();
+            checkGameOver();
+        }
     };
 
-const $btnKick = document.getElementById('btn-kick').addEventListener('click', handleKick);
-const $btnStrongKick = document.getElementById('btn-strong-kick').addEventListener('click', handleKickStrong);
+    const createClickCounter = (buttonId, maxClicks) => {
+        let clickCount = 0;
+        return () => {
+            if (clickCount < maxClicks) {
+                clickCount++;
+                console.log(`${buttonId}: Кількість натискань ${clickCount}/${maxClicks}`);
+                return true;
+            } else {
+                console.log(`${buttonId}: Ліміт натискань вичерпано`);
+                return false;
+            }
+        };
+    };
+
+    const kickClickCounter = createClickCounter('btn-kick', 7);
+    const strongKickClickCounter = createClickCounter('btn-strong-kick', 7);
+
+    const $btnKick = document.getElementById('btn-kick');
+    const $btnStrongKick = document.getElementById('btn-strong-kick');
+
+    $btnKick.addEventListener('click', () => handleKick(kickClickCounter));
+    $btnStrongKick.addEventListener('click', () => handleKickStrong(strongKickClickCounter));
 });
