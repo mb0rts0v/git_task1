@@ -12,6 +12,36 @@ document.addEventListener('DOMContentLoaded', () => {
         '[ПЕРСОНАЖ №1] намагався щось сказати, але раптом [ПЕРСОНАЖ №2] від нудьги розбив брову супротивнику.'
     ];
 
+    class Pokemon {
+        constructor(name, health, progressBarId, healthTextId) {
+            this.name = name;
+            this.health = health;
+            this.maxHealth = health;
+            this.progressBar = document.getElementById(progressBarId);
+            this.healthText = document.getElementById(healthTextId);
+            this.updateHealthBar();
+        }
+
+        updateHealthBar() {
+            this.health = Math.max(this.health, 0);
+            const healthPercentage = (this.health / this.maxHealth) * 100;
+            this.progressBar.style.width = `${healthPercentage}%`;
+            this.healthText.textContent = `${this.health} / ${this.maxHealth}`;
+        }
+
+        receiveDamage(damage, enemyName) {
+            this.health -= damage;
+            this.updateHealthBar();
+            const logMessage = this.getRandomLog(this.name, enemyName);
+            addLog(`${logMessage} ${this.name} отримав ${damage} пошкоджень. Залишилось ${this.health} HP.`);
+        }
+
+        getRandomLog(character1, character2) {
+            const randomIndex = Math.floor(Math.random() * logs.length);
+            return logs[randomIndex].replace('[ПЕРСОНАЖ №1]', character1).replace('[ПЕРСОНАЖ №2]', character2);
+        }
+    }
+
     const logsDiv = document.createElement('div');
     logsDiv.id = 'logs';
     document.body.appendChild(logsDiv);
@@ -22,79 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
         logsDiv.prepend(newLog);
     };
 
-    const getRandomLog = (character1, character2) => {
-        const randomIndex = Math.floor(Math.random() * logs.length);
-        return logs[randomIndex].replace('[ПЕРСОНАЖ №1]', character1).replace('[ПЕРСОНАЖ №2]', character2);
-    };
-
-    const character = {
-        name: 'Pikachu',
-        health: 100,
-        maxHealth: 100,
-        progressBar: document.getElementById('progressbar-character'),
-        healthText: document.getElementById('health-character'),
-
-        updateHealthBar() {
-            const { health, maxHealth, progressBar, healthText } = this;
-            this.health = Math.max(health, 0);
-            const healthPercentage = (this.health / maxHealth) * 100;
-            progressBar.style.width = `${healthPercentage}%`;
-            healthText.textContent = `${this.health} / ${this.maxHealth}`;
-        },
-
-        receiveDamage(damage, enemyName) {
-            this.health -= damage;
-            this.updateHealthBar();
-            const logMessage = getRandomLog(this.name, enemyName);
-            addLog(`${logMessage} ${this.name} отримав ${damage} пошкоджень. Залишилось ${this.health} HP.`);
-        },
-    };
-
+    const character = new Pokemon('Pikachu', 100, 'progressbar-character', 'health-character');
     const enemies = [
-        {
-            name: 'Charmander',
-            health: 100,
-            maxHealth: 100,
-            progressBar: document.getElementById('progressbar-enemy1'),
-            healthText: document.getElementById('health-enemy1'),
-
-            updateHealthBar() {
-                const { health, maxHealth, progressBar, healthText } = this;
-                this.health = Math.max(health, 0);
-                const healthPercentage = (this.health / maxHealth) * 100;
-                progressBar.style.width = `${healthPercentage}%`;
-                healthText.textContent = `${this.health} / ${this.maxHealth}`;
-            },
-
-            receiveDamage(damage, characterName) {
-                this.health -= damage;
-                this.updateHealthBar();
-                const logMessage = getRandomLog(this.name, characterName);
-                addLog(`${logMessage} ${this.name} отримав ${damage} пошкоджень. Залишилось ${this.health} HP.`);
-            },
-        },
-        {
-            name: 'Squirtle',
-            health: 100,
-            maxHealth: 100,
-            progressBar: document.getElementById('progressbar-enemy2'),
-            healthText: document.getElementById('health-enemy2'),
-
-            updateHealthBar() {
-                const { health, maxHealth, progressBar, healthText } = this;
-                this.health = Math.max(health, 0);
-                const healthPercentage = (this.health / maxHealth) * 100;
-                progressBar.style.width = `${healthPercentage}%`;
-                healthText.textContent = `${this.health} / ${this.maxHealth}`;
-            },
-
-            receiveDamage(damage, characterName) {
-                this.health -= damage;
-                this.updateHealthBar();
-                const logMessage = getRandomLog(this.name, characterName);
-                addLog(`${logMessage} ${this.name} отримав ${damage} пошкоджень. Залишилось ${this.health} HP.`);
-            },
-        },
+        new Pokemon('Charmander', 100, 'progressbar-enemy1', 'health-enemy1'),
+        new Pokemon('Bulbasaur', 100, 'progressbar-enemy2', 'health-enemy2')
     ];
 
     const checkGameOver = () => {
@@ -116,8 +77,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const handleKick = (kickClickCounter) => {
-        if (kickClickCounter()) {
+    const createClickCounter = (button, limit) => {
+        let clickCount = 0;
+        return () => {
+            if (clickCount < limit) {
+                clickCount++;
+                console.log(`Кнопка натиснута ${clickCount} разів. Залишилось ${limit - clickCount} натискань.`);
+                return true;
+            } else {
+                console.log('Кнопка більше не активна.');
+                return false;
+            }
+        };
+    };
+
+    const handleKick = createClickCounter(document.getElementById('btn-kick'), 6);
+    const handleKickStrong = createClickCounter(document.getElementById('btn-strong-kick'), 6);
+
+    const onKick = () => {
+        if (handleKick()) {
             enemies.forEach(enemy => {
                 const damage = Math.floor(Math.random() * 20) + 1;
                 enemy.receiveDamage(damage, character.name);
@@ -125,13 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const characterDamage = Math.floor(Math.random() * 20) + 1;
             character.receiveDamage(characterDamage, enemies[Math.floor(Math.random() * enemies.length)].name);
-
             checkGameOver();
         }
     };
 
-    const handleKickStrong = (strongKickClickCounter) => {
-        if (strongKickClickCounter()) {
+    const onKickStrong = () => {
+        if (handleKickStrong()) {
             enemies.forEach(enemy => {
                 const damage = Math.floor(Math.random() * 30) + 1;
                 enemy.receiveDamage(damage, character.name);
@@ -139,31 +116,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const characterDamage = Math.floor(Math.random() * 30) + 1;
             character.receiveDamage(characterDamage, enemies[Math.floor(Math.random() * enemies.length)].name);
-
             checkGameOver();
         }
     };
 
-    const createClickCounter = (buttonId, maxClicks) => {
-        let clickCount = 0;
-        return () => {
-            if (clickCount < maxClicks) {
-                clickCount++;
-                console.log(`${buttonId}: Кількість натискань ${clickCount}/${maxClicks}`);
-                return true;
-            } else {
-                console.log(`${buttonId}: Ліміт натискань вичерпано`);
-                return false;
-            }
-        };
-    };
-
-    const kickClickCounter = createClickCounter('btn-kick', 7);
-    const strongKickClickCounter = createClickCounter('btn-strong-kick', 7);
-
-    const $btnKick = document.getElementById('btn-kick');
-    const $btnStrongKick = document.getElementById('btn-strong-kick');
-
-    $btnKick.addEventListener('click', () => handleKick(kickClickCounter));
-    $btnStrongKick.addEventListener('click', () => handleKickStrong(strongKickClickCounter));
+    document.getElementById('btn-kick').addEventListener('click', onKick);
+    document.getElementById('btn-strong-kick').addEventListener('click', onKickStrong);
 });
